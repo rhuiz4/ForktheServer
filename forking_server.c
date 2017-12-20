@@ -7,39 +7,41 @@ void subserver(int from_client);
 
 static void sighandler(int signo) {
   if (signo == SIGINT) {
-    remove("luigi");
+    remove("WKP");
     exit(0);
   }
 }
 
 int main() {
-  int to_client;
+ 
   int from_client;
-  char input[BUFFER_SIZE];
-  int fo;
+  int fnum;
+
+  signal(SIGINT, sighandler);
   
   while(1){
-    fo = fork();
-    if(fo == 0){
-      printf("In child");
-      subserver(server_connect(&to_client));
+    fnum = fork();
+    printf("Subserver Process\n");
+    from_client = server_setup();
+    if(fnum == 0){
+      subserver(from_client);
     }
-    else{
-      printf("In parent");
-      wait(0);
-      printf("Waiting for server");
-    }
-    }
+  }
 
   return 0;
 }
 
 void subserver(int from_client) {
+  int to_client = server_connect(from_client);
+  char input[BUFFER_SIZE];
+  
   while(read(from_client, input, sizeof(input))){
-    printf("Text Received: %s\n", input);
-    process(input)
+    printf("[%d] Text Received: %s\n", getpid(),input);
+    process(input);
+    write(to_client, input, sizeof(input));
   }
-  write(to_client, input, sizeof(input));
+
+  exit(0);
 }
 
 void process(char * s) {

@@ -14,16 +14,16 @@
 int server_setup() {
 
   //Makes the well known pipe
-  if(!mkfifo("WKP",0600)){
-    printf("Pipe failed to create.\n");
-    return -1;
-  }
+  mkfifo("WKP",0600);
+ 
+  printf("[server] handshake: making WKP\n");
 
   //Waits for a connection on the other end of WKP
   int from_client = open("WKP", O_RDONLY, 0);
 
-  //Connection is made, close WKP
-  close("WKP");
+  //Connection is made, remove WKP
+  remove("WKP");
+  printf("[server] handshake: removed WKP\n");
   
   return from_client;
 }
@@ -43,18 +43,18 @@ int server_connect(int from_client) {
 
   //Subserver reads pipe name from client
   read(from_client, buffer, sizeof(buffer));
-  printf("[Server] Received from client: %s\n", buffer);
+  printf("[server] Received from client: %s\n", buffer);
 
   //Subserver connects to downstream pipe
   to_client = open(buffer, O_WRONLY, 0);
 
   //Subserver writes acknowledgment message to client
-  write(to_client, ACK, sizeof(buffer));
-  printf("[Server] Sent to client: %s\n", ACK);
+  write(to_client, buffer, sizeof(buffer));
+  printf("[server] Sent to client: %s\n", buffer);
 
   //Subserver reads acknowledgment message from client
   read(from_client, buffer, sizeof(buffer));
-  printf("[Server] Read from client: %s\n", buffer)l
+  printf("[server] Read from client: %s\n", buffer);
   
   return to_client;
 }
